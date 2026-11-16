@@ -9,18 +9,26 @@
 </head>
 <body class="p-5 bg-gray-800 text-white">
     <div class="border rounded-sm h-full p-5 mb-5">
-        <h1 class="text-3xl border-b w-fit mb-3">uploader.jpのアーカイブチェック</h1>
+        <h1 class="text-3xl border-b w-fit mb-3">uploader.jpの<br/>アーカイブチェック</h1>
         <p class="mb-3">自分のアップローダーが<br/>アーカイブされているかを確認できます。</p>
-        <h4 class="text-2xl">アップローダーIDを入力してください。</h4>
+        <h4 class="text-2xl">アップローダーIDを入力↓</h4>
         https://ux.getuploader.com/<input id="uploaderId" type="text" class="border p-2 rounded-sm h-full mb-3" placeholder="example" required><br>
         <button class="bg-blue-600 p-2 rounded-sm text-white" onclick="checkStart()">チェック開始</button>
 
         <br/><br/>
         <div class="border rounded-sm p-3">
 			<h3 class="text-2xl w-fit">チェック結果</h3>
-			<p id="status"></p>
+			<p id="status">まだチェックされていません。</p>
 		</div>
     </div>
+
+    <div class="border rounded-sm h-full p-5 mb-5">
+        <h1 class="text-2xl border-b w-fit mb-3">注意事項</h1>
+        <p>
+            このサービスはCloudflare Workerの<br/>無料プランで動かしているため、<br/>動かなくなる場合があります。<br/>また、短期間にチェックを繰り返すと<br/>一時的にサービスを<br/>利用できなくなります。
+        </p>
+    </div>
+
     <script>
 		const fmt = (n) => Number(n).toLocaleString("ja-JP");
 
