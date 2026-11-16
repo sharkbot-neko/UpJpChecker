@@ -59,6 +59,12 @@
             });
 
             const json = await res.json();
+
+			if (json.status != "ok") {
+				document.getElementById("status").innerText = "まだアーカイブされていません！"
+				return;
+			}
+
 			const item = json.item;
 
 			document.getElementById("status").innerText = `名前: ${item.name}
