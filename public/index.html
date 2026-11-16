@@ -1,32 +1,73 @@
-<!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Hello, World!</title>
-	</head>
-	<body>
-		<h1 id="heading"></h1>
-		<p>This page comes from a static asset stored at `public/index.html` as configured in `wrangler.jsonc`.</p>
-		<button id="button" type="button">Fetch a random UUID</button>
-		<output id="random" for="button"></output>
-		<script>
-			fetch('/message')
-				.then((resp) => resp.text())
-				.then((text) => {
-					const h1 = document.getElementById('heading');
-					h1.textContent = text;
-				});
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>uploader.jpチェック</title>
+    <link rel="icon" type="image/svg" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZjdiMGYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1saW5rIHByZXZpZXctaWNvbiI+PHBhdGggZD0iTTEwIDEzYTUgNSAwIDAgMCA3LjU0LjU0bDMtM2E1IDUgMCAwIDAtNy4wNy03LjA3bC0xLjcyIDEuNzEiLz48cGF0aCBkPSJNMTQgMTFhNSA1IDAgMCAwLTcuNTQtLjU0bC0zIDNhNSA1IDAgMCAwIDcuMDcgNy4wN2wxLjcxLTEuNzEiLz48L3N2Zz4=">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="p-5 bg-gray-800 text-white">
+    <div class="border rounded-sm h-full p-5 mb-5">
+        <h1 class="text-3xl border-b w-fit mb-3">uploader.jpのアーカイブチェック</h1>
+        <p class="mb-3">自分のアップローダーが<br/>アーカイブされているかを確認できます。</p>
+        <h4 class="text-2xl">アップローダーIDを入力してください。</h4>
+        https://ux.getuploader.com/<input id="uploaderId" type="text" class="border p-2 rounded-sm h-full mb-3" placeholder="example" required><br>
+        <button class="bg-blue-600 p-2 rounded-sm text-white" onclick="checkStart()">チェック開始</button>
 
-			const button = document.getElementById("button");
-			button.addEventListener("click", () => {
-				fetch('/random')
-					.then((resp) => resp.text())
-					.then((text) => {
-						const random = document.getElementById('random');
-						random.textContent = text;
-					});
-			});
-		</script>
-	</body>
+        <br/><br/>
+        <div class="border rounded-sm p-3">
+			<h3 class="text-2xl w-fit">チェック結果</h3>
+			<p id="status"></p>
+		</div>
+    </div>
+    <script>
+		const fmt = (n) => Number(n).toLocaleString("ja-JP");
+
+		function pwText(p) {
+			if (!p) return "集計中";
+			const parts = [];
+			if (p.uploader) {
+				parts.push("アップローダー単位（閲覧パスワード）・reCAPTCHA待ち・パスワード" + (p.uploader.candidate ? "候補あり" : "不明")
+					+ (p.uploader.confirmed ? "" : "（最初の調査での判定）"));
+			}
+			if (p.files) {
+				const unknown = p.files.need - p.files.candidate;
+				let t = `ファイル単位 ${fmt(p.files.need + p.files.wrong)} 件が未取得: パスワード候補あり（未試行）${fmt(p.files.candidate)}・不明 ${fmt(unknown)}`;
+				if (p.files.wrong) t += `・候補が違った ${fmt(p.files.wrong)}`;
+				parts.push(t);
+			}
+			if (parts.length) return parts.join(" / ");
+			return p.opened ? "なし" : "未確認（まだ開いていない）";
+		}
+
+		const SAVED_LABEL = { queued: "メタデータ未取得", checked: "メタデータ取得済み、未ダウンロード", pw: "メタデータ取得済み、未ダウンロード（パスワード不明）", partial: "ダウンロード途中", done: "ダウンロード完了", na: "-", empty: "空（ファイルなし）", recaptcha: "reCAPTCHA待ち", done_pw: "パスワード付き以外ダウンロード完了" };
+
+        async function checkStart() {
+            const uploaderId = document.getElementById("uploaderId").value.trim();
+            if (uploaderId === "") {
+                alert("アップローダーのIDを入力してください。")
+                return;
+            }
+
+            const res = await fetch("/api/check", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: uploaderId })
+            });
+
+            const json = await res.json();
+			const item = json.item;
+
+			document.getElementById("status").innerText = `名前: ${item.name}
+保存状態: ${item.saved ? SAVED_LABEL[item.saved] : '不明'}
+アーカイブされた容量: ${item.mib}MB
+アーカイブされたファイル数: ${item.files}
+パスワード状態: ${item.pw ? pwText(item.pw) : '不明'}
+`;
+        }
+    </script>
+</body>
 </html>
